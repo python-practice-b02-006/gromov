@@ -6,7 +6,7 @@ from numpy import *
 
 number_of_atoms = 100
 steps_of_time_number = 2000
-size = 100 #size of field
+size = 100 
 atomsize = 2
 step = 1 
 
