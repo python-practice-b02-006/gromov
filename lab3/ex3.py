@@ -21,4 +21,4 @@ width(3)
 left(90)
 index = '141700'
 drawindex(index) 
-done(
+done()
