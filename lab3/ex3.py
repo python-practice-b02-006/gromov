@@ -3,7 +3,7 @@ from numpy import *
 
 def addnum(num:int):
     inp = open('ex3_sup.txt', 'r').readlines()
-    s = inp[num].rstrip() #в строке с номеров num содержится алгоритм для цифры num
+    s = inp[num].rstrip()
     commlist = s.split(' -> ')
     for command in commlist:
         eval(command)
