@@ -1,4 +1,4 @@
-import turtle as tl
+from turtle import *
 
 g = -10
 vx = 10
@@ -8,7 +8,7 @@ k = 0.01
 
 ax = -k * vx; ay = g - k*vy; asx = 0; asy = 0; vsx = 0; vsy = 0; ux = 0; uy = 0; x = -200; y = 0; 
 
-tl.penup(); tl.goto(x, y); tl.pendown(); tl.shape("circle");
+penup(); goto(x, y); pendown(); shape("circle");
 
 while 0 == 0:
     vsx = vx + ax*dt
@@ -21,8 +21,8 @@ while 0 == 0:
     uy = vy + dt * (ay + asy)/2
     x = x + dt * (vx + ux)/2
     y = y + dt * (vy + uy)/2
-    tl.goto(x, y)
+    goto(x, y)
     vx = ux
     vy = uy
     if y <= 0: vy = -vy
-tl.done()
+done()
