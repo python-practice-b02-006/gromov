@@ -11,7 +11,7 @@ GREEN = (0, 255, 0)
 
 
 def rand_color():
-    return (randint(0, 255), randint(0, 255), randint(0, 255))
+    return(randint(20, 255), randint(20, 255), randint(20, 255))
 
 
 class Gun():
@@ -22,6 +22,7 @@ class Gun():
         self.size = 40
         self.r = 2 * self.size
         self.speed = 1
+        self.speed_max = 30
         self.dir = False
         self.active = False
         self.step_active = False
@@ -52,8 +53,8 @@ class Gun():
         self.active = True
 
     def gain(self):
-        if self.active:
-            self.speed += 0.2
+        if self.active and self.speed <= self.speed_max:
+            self.speed += 2/self.speed
         if self.step_active:
             if not self.dir and self.x < SCREEN_SIZE[0] - self.size/2:
                 self.x += 1
@@ -68,13 +69,43 @@ class Gun():
         self.step_active = False
 
 
-class Target:
-    pass
+class Target():
+
+    def __init__(self):
+        self.size = 30
+        self.dir = randint(0, 1)
+        if self.dir == 0:
+            self.x = 0 - 3*randint(2, 5)*self.size
+            self.speed = 3
+        elif self.dir == 1:
+            self.x = SCREEN_SIZE[0] + 3*randint(0, 3)*self.size
+            self.speed = -3
+        self.y = 2 * randint(0, 5) * self.size
+        self.color = rand_color()
+        self.is_alive = True
+
+    def move(self):
+        self.x += self.speed
+        if self.dir == 0:
+            if self.x > SCREEN_SIZE[0] + 2*self.size:
+                self.is_alive = False
+        elif self.dir == 1:
+            if self.x < -2 * self.size:
+                self.is_alive = False
+
+    def draw(self):
+        pg.draw.rect(screen, self.color, (self.x, self.y, 2 * self.size, self.size), 0)
+
+    def check_collision(self, bullet):
+        if self.y + self.size > bullet.coord[1] > self.y and self.x + 2*self.size > bullet.coord[0] > self.x:
+            return True
+        else:
+            return False
 
 
 class Bullet():
 
-    def __init__(self, coord, vel, rad=20, color=None):
+    def __init__(self, coord, vel, rad=5, color=None):
         self.coord = coord
         self.vel = vel
         if color == None:
@@ -101,13 +132,22 @@ class Manager():
     def __init__(self):
         self.gun = Gun()
         self.bullets = []
+        self.targets = []
+        self.n_targets = 4
+
+    def new_mission(self):
+        for i in range(self.n_targets):
+            self.targets.append(Target())
 
     def process(self, events):
         done = self.event_handler(events)
 
+        self.collide()
         self.draw()
         self.move()
 
+        if len(self.targets) == 0:
+            self.new_mission()
         return done
 
     def event_handler(self, events):
@@ -137,11 +177,11 @@ class Manager():
         self.gun.draw()
         for bullet in self.bullets:
             bullet.draw()
+        for target in self.targets:
+            target.draw()
 
     def move(self):
         self.gun.gain()
-        for bullet in self.bullets:
-            bullet.move()
         dead_bullets = []
         for i, bullet in enumerate(self.bullets):
             bullet.move()
@@ -149,6 +189,25 @@ class Manager():
                 dead_bullets.append(i)
         for i in reversed(dead_bullets):
             self.bullets.pop(i)
+        dead_targets = []
+        for i, target in enumerate(self.targets):
+            target.move()
+            if not target.is_alive:
+                dead_targets.append(i)
+        for i in reversed(dead_targets):
+            self.targets.pop(i)
+
+    def collide(self):
+        collisions = []
+        targets_c = []
+        for i, bullet in enumerate(self.bullets):
+            for j, target in enumerate(self.targets):
+                if target.check_collision(bullet):
+                    collisions.append([i, j])
+                    targets_c.append(j)
+        targets_c.sort()
+        for j in reversed(targets_c):
+            self.targets.pop(j)
 
 
 clock = pg.time.Clock()
