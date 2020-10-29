@@ -21,7 +21,9 @@ class Gun():
         self.size = 40
         self.r = 2 * self.size
         self.speed = 1
+        self.dir = False
         self.active = False
+        self.step_activ = False
 
     def draw_body(self):
         pg.draw.rect(screen, GREEN,
@@ -51,6 +53,18 @@ class Gun():
     def gain(self):
         if self.active:
             self.speed += 0.2
+        if self.step_activ:
+            if not self.dir and self.x < SCREEN_SIZE[0] - self.size/2:
+                self.x += 1
+            elif self.dir and self.x > self.size/2:
+                self.x -= 1
+
+    def move(self, dir):
+        self.dir = dir
+        self.step_activ = True
+
+    def stop(self):
+        self.step_activ = False
 
 
 class Target:
@@ -96,12 +110,22 @@ class Manager():
         for event in events:
             if event.type == pg.QUIT:
                 done = True
-            elif event.type == pg.KEYDOWN:
-                if event.key == pg.K_SPACE:
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                if event.button == 1:
                     self.gun.activate()
-            elif event.type == pg.KEYUP:
-                if event.key == pg.K_SPACE:
+            elif event.type == pg.MOUSEBUTTONUP:
+                if event.button == 1:
                     self.bullets.append(self.gun.strike())
+            elif event.type == pg.KEYDOWN:
+                if event.key == pg.K_RIGHT:
+                    self.gun.move(False)
+                elif event.key == pg.K_LEFT:
+                    self.gun.move(True)
+            elif event.type == pg.KEYUP:
+                if event.key == pg.K_RIGHT:
+                    self.gun.stop()
+                elif event.key == pg.K_LEFT:
+                    self.gun.stop()
         return done
 
     def draw(self):
