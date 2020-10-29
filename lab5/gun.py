@@ -84,11 +84,12 @@ class Target():
             self.x = 0 - 3 * randint(2, 5) * self.size
             self.speed = 3
         elif self.dir == 1:
-            self.x = SCREEN_SIZE[0] + 3 * randint(0, 3) * self.size
+            self.x = SCREEN_SIZE[0] + 3 * randint(2, 5) * self.size
             self.speed = -3
         self.y = 2 * randint(1, 6) * self.size
         self.color = rand_color()
         self.is_alive = True
+        self.fired = False
 
     def move(self):
         self.x += self.speed
@@ -108,9 +109,12 @@ class Target():
         else:
             return False
 
-    '''def strike(self, gun):
-        if self.x + self.size/2 <= gun.x + gun.size/2 <= self.x + 3*self.size/2:
-            return True'''
+    def strike(self, gun):
+        if self.x + self.size/2 <= gun.x + gun.size/2 <= self.x + 3*self.size/2 and not self.fired:
+            self.fired = True
+            return True
+        else:
+            return False
 
 
 class Bullet():
@@ -124,7 +128,7 @@ class Bullet():
         self.rad = rad
         self.is_alive = True
 
-    def move(self, grav=0.2):
+    def move(self, grav):
         self.vel[1] += grav
         for i in range(2):
             self.coord[i] += self.vel[i]
@@ -140,15 +144,29 @@ class Bullet():
 
 class Bomb():
 
-    def __init__(self, y, grav):
+    def __init__(self, y, x, speed):
         self.size = 20
         self.y = y
-        self.speed = 0
-        self.grav = grav
+        self.speed = speed
+        self.x = x
+        self.is_alive = True
 
     def move(self):
-        self.speed += self.grav
         self.y += self.speed
+        if self.y > SCREEN_SIZE[1]:
+            self.is_alive = False
+
+    def draw(self):
+        pg.draw.rect(screen, RED, (int(self.x) - int(3*self.size/2),
+                                   int(self.y), int(self.size), int(self.size)), 0)
+
+    def check_collision(self, gun):
+        if self.y + self.size > gun.y - gun.size \
+                and (self.x - self.size/2 > gun.x - gun.size/2
+                     and gun.x + gun.size/2 > self.x - 3*self.size/2):
+            return True
+        else:
+            return False
 
 
 class ScoreTable():
@@ -173,6 +191,10 @@ class ScoreTable():
             pg.draw.rect(screen, RED, (SCREEN_SIZE[0] + 70, 550 - 15 * i, 10, 10), 0)
         screen.blit((self.font.render("POWER".format(self.t_destr), True, WHITE)), [845, 570])
 
+    def loose(self):
+        self.font = pg.font.SysFont("dejavusansmono", 100)
+        screen.blit((self.font.render("YOU LOSE".format(self.t_destr), True, WHITE)), [300, 250])
+
 
 class Manager():
 
@@ -181,7 +203,10 @@ class Manager():
         self.bullets = []
         self.targets = []
         self.n_targets = 4
+        self.bombs = []
         self.table = ScoreTable()
+        self.grav = 0.3
+        self.b_spd = 3
 
     def new_mission(self):
         for i in range(self.n_targets):
@@ -189,11 +214,9 @@ class Manager():
 
     def process(self, events):
         done = self.event_handler(events)
-
+        self.move()
         self.collide()
         self.draw()
-        self.move()
-
         if len(self.targets) == 0:
             self.new_mission()
         return done
@@ -227,13 +250,15 @@ class Manager():
             bullet.draw()
         for target in self.targets:
             target.draw()
+        for bomb in self.bombs:
+            bomb.draw()
         self.table.draw(self.gun.speed)
 
     def move(self):
         self.gun.gain()
         dead_bullets = []
         for i, bullet in enumerate(self.bullets):
-            bullet.move()
+            bullet.move(self.grav)
             if not bullet.is_alive:
                 dead_bullets.append(i)
         for i in reversed(dead_bullets):
@@ -241,10 +266,19 @@ class Manager():
         dead_targets = []
         for i, target in enumerate(self.targets):
             target.move()
+            if target.strike(self.gun):
+                self.bombs.append(Bomb(target.y + target.size, target.x + target.size, self.b_spd))
             if not target.is_alive:
                 dead_targets.append(i)
         for i in reversed(dead_targets):
             self.targets.pop(i)
+        dead_bombs = []
+        for i, bomb in enumerate(self.bombs):
+            bomb.move()
+            if not bomb.is_alive:
+                dead_bombs.append(i)
+        for i in reversed(dead_bombs):
+            self.bombs.pop(i)
 
     def collide(self):
         collisions = []
@@ -258,6 +292,21 @@ class Manager():
         for j in reversed(targets_c):
             self.targets.pop(j)
             self.table.t_destr += 1
+            self.b_spd += 0.3
+        bombs_c = []
+        for i, bomb in enumerate(self.bombs):
+            if bomb.check_collision(self.gun):
+                bombs_c.append(i)
+        for i in reversed(bombs_c):
+            self.bombs.pop(i)
+            self.table.lives -= 1
+            if self.table.lives == 0:
+                screen.fill(BLACK)
+                self.table.loose()
+                pg.display.flip()
+                pg.time.wait(2000)
+                pg.quit()
+
 
 
 clock = pg.time.Clock()
@@ -267,7 +316,7 @@ mgr = Manager()
 
 while not DONE:
     clock.tick(FPS)
-    screen.fill((0, 0, 0))
+    screen.fill(BLACK)
     DONE = mgr.process(pg.event.get())
     pg.display.flip()
 
