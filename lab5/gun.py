@@ -9,6 +9,7 @@ SCREEN_SIZE = (800, 600)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
 
+
 def rand_color():
     return (randint(0, 255), randint(0, 255), randint(0, 255))
 
@@ -23,7 +24,7 @@ class Gun():
         self.speed = 1
         self.dir = False
         self.active = False
-        self.step_activ = False
+        self.step_active = False
 
     def draw_body(self):
         pg.draw.rect(screen, GREEN,
@@ -53,18 +54,18 @@ class Gun():
     def gain(self):
         if self.active:
             self.speed += 0.2
-        if self.step_activ:
+        if self.step_active:
             if not self.dir and self.x < SCREEN_SIZE[0] - self.size/2:
                 self.x += 1
             elif self.dir and self.x > self.size/2:
                 self.x -= 1
 
-    def move(self, dir):
-        self.dir = dir
-        self.step_activ = True
+    def move(self, direct):
+        self.dir = direct
+        self.step_active = True
 
     def stop(self):
-        self.step_activ = False
+        self.step_active = False
 
 
 class Target:
@@ -86,6 +87,10 @@ class Bullet():
         self.vel[1] += grav
         for i in range(2):
             self.coord[i] += self.vel[i]
+        if self.coord[0] > SCREEN_SIZE[0] + self.rad \
+                or self.coord[0] < -1 * self.rad \
+                or self.coord[1] > SCREEN_SIZE[1] + self.rad:
+            self.is_alive = False
 
     def draw(self):
         pg.draw.circle(screen, self.color, list(map(int, self.coord)), self.rad)
@@ -137,6 +142,13 @@ class Manager():
         self.gun.gain()
         for bullet in self.bullets:
             bullet.move()
+        dead_bullets = []
+        for i, bullet in enumerate(self.bullets):
+            bullet.move()
+            if not bullet.is_alive:
+                dead_bullets.append(i)
+        for i in reversed(dead_bullets):
+            self.bullets.pop(i)
 
 
 clock = pg.time.Clock()
