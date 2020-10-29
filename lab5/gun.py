@@ -8,10 +8,12 @@ FPS = 60
 SCREEN_SIZE = (800, 600)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
 
 
 def rand_color():
-    return(randint(20, 255), randint(20, 255), randint(20, 255))
+    return (randint(20, 255), randint(20, 255), randint(20, 255))
 
 
 class Gun():
@@ -29,22 +31,26 @@ class Gun():
 
     def draw_body(self):
         pg.draw.rect(screen, GREEN,
-                     (int(self.x - self.size/2), int(self.y - self.size),
-                      int(self.size),  int(self.size)), 0)
+                     (int(self.x - self.size / 2), int(self.y - self.size),
+                      int(self.size), int(self.size)), 0)
 
     def draw_huy(self):
-        angle = np.arctan2((pg.mouse.get_pos()[0] - self.x), -pg.mouse.get_pos()[1] + SCREEN_SIZE[1] - 5*self.size/6)
-        pg.draw.line(screen, GREEN, (int(self.x), int(self.y - 5*self.size/6)),
-                     (int(self.x + np.sin(angle)*self.r), int(self.y - 5*self.size/6 - np.cos(angle)*self.r)), 5)
+        angle = np.arctan2((pg.mouse.get_pos()[0] - self.x),
+                           -pg.mouse.get_pos()[1] + SCREEN_SIZE[1] - 5 * self.size / 6)
+        pg.draw.line(screen, GREEN, (int(self.x), int(self.y - 5 * self.size / 6)),
+                     (int(self.x + np.sin(angle) * self.r), int(self.y - 5 * self.size / 6 - np.cos(angle) * self.r)),
+                     5)
 
     def draw(self):
         self.draw_huy()
         self.draw_body()
 
     def strike(self):
-        angle = np.arctan2((pg.mouse.get_pos()[0] - self.x), -pg.mouse.get_pos()[1] + SCREEN_SIZE[1] - 5*self.size/6)
-        bullet = Bullet([int(self.x + np.sin(angle)*self.r), int(self.y - 5*self.size/6 - np.cos(angle)*self.r)],
-                        [int(np.sin(angle)*self.speed), int(-np.cos(angle)*self.speed)])
+        angle = np.arctan2((pg.mouse.get_pos()[0] - self.x),
+                           -pg.mouse.get_pos()[1] + SCREEN_SIZE[1] - 5 * self.size / 6)
+        bullet = Bullet(
+            [int(self.x + np.sin(angle) * self.r), int(self.y - 5 * self.size / 6 - np.cos(angle) * self.r)],
+            [int(np.sin(angle) * self.speed), int(-np.cos(angle) * self.speed)])
         self.active = False
         self.speed = 1
         return bullet
@@ -54,11 +60,11 @@ class Gun():
 
     def gain(self):
         if self.active and self.speed <= self.speed_max:
-            self.speed += 2/self.speed
+            self.speed += 2 / self.speed
         if self.step_active:
-            if not self.dir and self.x < SCREEN_SIZE[0] - self.size/2:
+            if not self.dir and self.x < SCREEN_SIZE[0] - self.size / 2:
                 self.x += 1
-            elif self.dir and self.x > self.size/2:
+            elif self.dir and self.x > self.size / 2:
                 self.x -= 1
 
     def move(self, direct):
@@ -75,19 +81,19 @@ class Target():
         self.size = 30
         self.dir = randint(0, 1)
         if self.dir == 0:
-            self.x = 0 - 3*randint(2, 5)*self.size
+            self.x = 0 - 3 * randint(2, 5) * self.size
             self.speed = 3
         elif self.dir == 1:
-            self.x = SCREEN_SIZE[0] + 3*randint(0, 3)*self.size
+            self.x = SCREEN_SIZE[0] + 3 * randint(0, 3) * self.size
             self.speed = -3
-        self.y = 2 * randint(0, 5) * self.size
+        self.y = 2 * randint(1, 6) * self.size
         self.color = rand_color()
         self.is_alive = True
 
     def move(self):
         self.x += self.speed
         if self.dir == 0:
-            if self.x > SCREEN_SIZE[0] + 2*self.size:
+            if self.x > SCREEN_SIZE[0] + 2 * self.size:
                 self.is_alive = False
         elif self.dir == 1:
             if self.x < -2 * self.size:
@@ -97,10 +103,14 @@ class Target():
         pg.draw.rect(screen, self.color, (self.x, self.y, 2 * self.size, self.size), 0)
 
     def check_collision(self, bullet):
-        if self.y + self.size > bullet.coord[1] > self.y and self.x + 2*self.size > bullet.coord[0] > self.x:
+        if self.y + self.size > bullet.coord[1] > self.y and self.x + 2 * self.size > bullet.coord[0] > self.x:
             return True
         else:
             return False
+
+    '''def strike(self, gun):
+        if self.x + self.size/2 <= gun.x + gun.size/2 <= self.x + 3*self.size/2:
+            return True'''
 
 
 class Bullet():
@@ -114,17 +124,54 @@ class Bullet():
         self.rad = rad
         self.is_alive = True
 
-    def move(self, grav = 0.2):
+    def move(self, grav=0.2):
         self.vel[1] += grav
         for i in range(2):
             self.coord[i] += self.vel[i]
         if self.coord[0] > SCREEN_SIZE[0] + self.rad \
                 or self.coord[0] < -1 * self.rad \
-                or self.coord[1] > SCREEN_SIZE[1] + self.rad:
+                or self.coord[1] > SCREEN_SIZE[1] + self.rad \
+                or self.coord[1] < -1 * self.rad:
             self.is_alive = False
 
     def draw(self):
         pg.draw.circle(screen, self.color, list(map(int, self.coord)), self.rad)
+
+
+class Bomb():
+
+    def __init__(self, y, grav):
+        self.size = 20
+        self.y = y
+        self.speed = 0
+        self.grav = grav
+
+    def move(self):
+        self.speed += self.grav
+        self.y += self.speed
+
+
+class ScoreTable():
+
+    def __init__(self, t_destr=0, lives=5):
+        self.t_destr = t_destr
+        self.lives = lives
+        self.font = pg.font.SysFont("dejavusansmono", 25)
+
+    def score(self):
+        return self.t_destr
+
+    def draw(self, pow):
+        pg.draw.rect(screen, BLACK, (SCREEN_SIZE[0], 0, 150, SCREEN_SIZE[1]), 0)
+        pg.draw.line(screen, WHITE, (SCREEN_SIZE[0], 0), (SCREEN_SIZE[0], SCREEN_SIZE[1]), 5)
+        score_surf = []
+        score_surf.append(self.font.render("Destroyed: {}".format(self.t_destr), True, WHITE))
+        score_surf.append(self.font.render("Lives: {}".format(self.lives), True, RED))
+        for i in range(2):
+            screen.blit(score_surf[i], [810, 10 + 30 * i])
+        for i in range(int(pow)):
+            pg.draw.rect(screen, RED, (SCREEN_SIZE[0] + 70, 550 - 15 * i, 10, 10), 0)
+        screen.blit((self.font.render("POWER".format(self.t_destr), True, WHITE)), [845, 570])
 
 
 class Manager():
@@ -134,6 +181,7 @@ class Manager():
         self.bullets = []
         self.targets = []
         self.n_targets = 4
+        self.table = ScoreTable()
 
     def new_mission(self):
         for i in range(self.n_targets):
@@ -179,6 +227,7 @@ class Manager():
             bullet.draw()
         for target in self.targets:
             target.draw()
+        self.table.draw(self.gun.speed)
 
     def move(self):
         self.gun.gain()
@@ -208,11 +257,12 @@ class Manager():
         targets_c.sort()
         for j in reversed(targets_c):
             self.targets.pop(j)
+            self.table.t_destr += 1
 
 
 clock = pg.time.Clock()
 DONE = False
-screen = pg.display.set_mode(SCREEN_SIZE)
+screen = pg.display.set_mode((SCREEN_SIZE[0] + 150, SCREEN_SIZE[1]))
 mgr = Manager()
 
 while not DONE:
