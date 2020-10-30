@@ -410,9 +410,9 @@ class Manager():
         bool
         """
         done = self.event_handler(events)
+        self.draw()
         self.move()
         self.collide()
-        self.draw()
         if len(self.targets) == 0:
             self.new_mission()
         return done
@@ -539,8 +539,9 @@ mgr = Manager()
 
 while not DONE:  # the main cycle of the program
     clock.tick(FPS)
-    screen.fill(BLACK)
-    DONE = mgr.process(pg.event.get())
-    pg.display.flip()
+    if pg.get_init():
+        screen.fill(BLACK)
+        DONE = mgr.process(pg.event.get())
+        pg.display.flip()
 
 pg.quit()
