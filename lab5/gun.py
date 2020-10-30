@@ -387,6 +387,7 @@ class Manager():
         self.table = ScoreTable()
         self.grav = 0.3
         self.b_spd = 3
+        self.lose = False
 
     def new_mission(self):
         """
@@ -415,6 +416,8 @@ class Manager():
         self.collide()
         if len(self.targets) == 0:
             self.new_mission()
+        if self.lose:
+            done = True
         return done
 
     def event_handler(self, events):
@@ -528,8 +531,7 @@ class Manager():
                 screen.fill(BLACK)
                 self.table.loose()
                 pg.display.flip()
-                pg.time.wait(2000)
-                pg.quit()
+                self.lose = True
 
 
 clock = pg.time.Clock()
@@ -545,4 +547,6 @@ while not DONE:  # the main cycle of the program
     if pg.get_init():
         pg.display.flip()
 
-pg.quit()
+if pg.get_init():
+    pg.quit()
+
