@@ -542,6 +542,7 @@ while not DONE:  # the main cycle of the program
     if pg.get_init():
         screen.fill(BLACK)
         DONE = mgr.process(pg.event.get())
+    if pg.get_init():
         pg.display.flip()
 
 pg.quit()
