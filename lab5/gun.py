@@ -52,9 +52,9 @@ class Gun():
                      (int(self.x - self.size / 2), int(self.y - self.size),
                       int(self.size), int(self.size)), 0)
 
-    def draw_huy(self):
+    def draw_stick(self):
         """
-        Draw the huy of the gun
+        Draw the stick of the gun
         Returns
         -------
         None
@@ -72,7 +72,7 @@ class Gun():
         -------
         None
         """
-        self.draw_huy()
+        self.draw_stick()
         self.draw_body()
 
     def strike(self):
